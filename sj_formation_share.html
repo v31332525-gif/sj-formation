@@ -145,6 +145,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
       </div>
     </div>
     <div id="playAction"></div>
+
+    <!-- Video at bottom -->
+    <div style="width:100%;background:#000;border-radius:10px;overflow:hidden;margin-top:10px">
+      <video id="videoFrame" src="0610.mp4" controls playsinline style="width:100%;display:block;max-height:310px"></video>
+    </div>
   </div>
 
   <!-- VIEW -->
@@ -307,6 +312,8 @@ function jumpTo(idx){
   document.getElementById('startBtn').style.display='none';
   document.getElementById('stopBtn').style.display='block';
   document.getElementById('startBtn').textContent='▶ 繼續';
+  const video=document.getElementById('videoFrame');
+  if(video){video.currentTime=playElapsed;video.play();}
   playStartTime=Date.now()-playElapsed*1000;
   playTimer=setInterval(tick,100);
 }
@@ -349,14 +356,35 @@ function renderPlayStageAt(idx){
 }
 
 function startPlay(){
-  document.getElementById('startBtn').style.display='none';
-  document.getElementById('stopBtn').style.display='block';
-  playStartTime=Date.now()-playElapsed*1000;
-  playTimer=setInterval(tick,100);
+  const btn=document.getElementById('startBtn');
+  btn.disabled=true;
+  let count=3;
+  btn.textContent='▶ '+count+'...';
+  const cd=setInterval(()=>{
+    count--;
+    if(count>0){
+      btn.textContent='▶ '+count+'...';
+    } else {
+      clearInterval(cd);
+      // 真正控制 video 播放
+      const video=document.getElementById('videoFrame');
+      if(video){
+        video.currentTime=playElapsed;
+        video.play();
+      }
+      btn.style.display='none';
+      btn.disabled=false;
+      document.getElementById('stopBtn').style.display='block';
+      playStartTime=Date.now()-playElapsed*1000;
+      playTimer=setInterval(tick,100);
+    }
+  },1000);
 }
 function stopPlay(){
   clearInterval(playTimer);playTimer=null;
   playElapsed=(Date.now()-playStartTime)/1000;
+  const video=document.getElementById('videoFrame');
+  if(video) video.pause();
   document.getElementById('startBtn').style.display='block';
   document.getElementById('stopBtn').style.display='none';
   document.getElementById('startBtn').textContent='▶ 繼續';
@@ -364,6 +392,8 @@ function stopPlay(){
 function resetPlay(){
   clearInterval(playTimer);playTimer=null;
   playElapsed=0;playStartTime=null;currentFIdx=-1;
+  const video=document.getElementById('videoFrame');
+  if(video){video.pause();video.currentTime=0;}
   document.getElementById('startBtn').style.display='block';
   document.getElementById('stopBtn').style.display='none';
   document.getElementById('startBtn').textContent='▶ 開始';
